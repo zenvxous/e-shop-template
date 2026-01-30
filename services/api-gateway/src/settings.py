@@ -14,5 +14,6 @@ class Settings(BaseSettings):
     )
 
     log_level: str = Field(default="DEBUG", alias="LOG_LEVEL")
+    log_type: str = Field(default="dev", alias="LOG_TYPE")
 
 settings = Settings()
