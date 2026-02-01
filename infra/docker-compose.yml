@@ -1,0 +1,432 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
+#Networks
+networks:
+  backend:
+    driver: bridge
+  database:
+    driver: bridge
+
+#Volumes
+volumes:
+  postgres_data:
+  mongo_data:
+  minio_data:
+  rabbitmq_data:
+
+#Services
+services:
+  #Infrastructer
+  postgres:
+    image: postgres:alpine3.23
+    container_name: e-shop-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASS}
+      POSTGRES_DB: ${POSTGRES_DB:-marketplace}
+      KC_DB_PASS: ${KC_DB_PASS}
+      USER_DB_PASS: ${USER_DB_PASS}
+      CATALOG_DB_PASS: ${CATALOG_DB_PASS}
+      ORDER_DB_PASS: ${ORDER_DB_PASS}
+      PAYMENT_DB_PASS: ${PAYMENT_DB_PASS}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./postgres/01-init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
+    networks:
+      - database
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    logging: *default-logging
+
+  rabbitmq:
+    image: rabbitmq:4.0.9-management
+    container_name: e-shop-rabbitmq
+    restart: unless-stopped
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-marketplace}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASS}
+    ports:
+      - "15672:15672"
+      - "5672:5672" 
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD-SHELL", "rabbitmq-diagnostics -q check_running && rabbitmq-diagnostics -q check_local_alarms"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+
+  mongo:
+    image: mongo:8.2.4
+    container_name: e-shop-mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:-mongo}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASS}
+      NOTIF_MONGO_PASS: ${NOTIF_MONGO_PASS:-notif_pass}
+      CONFIG_MONGO_PASS: ${CONFIG_MONGO_PASS:-config_pass} 
+    networks:
+      - database
+    volumes:
+      - mongo_data:/data/db
+      - ./mongo/01-init-databases.js:/docker-entrypoint-initdb.d/01-init.js:ro
+    ports:
+      - "27017:27017"
+    healthcheck:
+      test: >
+        mongosh --quiet
+        --username ${MONGO_ROOT_USERNAME:-mongo}
+        --password ${MONGO_ROOT_PASS}
+        --authenticationDatabase admin
+        --eval "db.adminCommand('ping').ok"
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s   
+    logging: *default-logging   
+
+  minio:
+    image: minio/minio:latest
+    container_name: e-shop-minio
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASS}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - backend
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 40s 
+    logging: *default-logging
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: e-shop-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASS}
+    networks:
+      - backend
+    volumes:
+      - ./minio/01-init-buckets.sh:/01-init-buckets.sh:ro
+    entrypoint: /01-init-buckets.sh
+    restart: "no"
+
+  keycloak:
+    build:
+      context: ./keycloak
+      dockerfile: Dockerfile
+    container_name: e-shop-keycloak
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://postgres:5432/keycloak_db
+      KC_DB_USERNAME: keycloak_svc
+      KC_DB_PASSWORD: ${KC_DB_PASS}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN:-admin}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PASS:-admin}
+    command: start-dev
+    ports:
+      - "8080:8080"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD-SHELL", "exec 3<>/dev/tcp/127.0.0.1/8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    logging: *default-logging
+
+  # user-service:
+  #   build:
+  #     context: ../services/user-service
+  #     dockerfile: Dockerfile
+  #   container_name: e-shop-user-service
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     keycloak:
+  #       condition: service_started
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     SERVICE_NAME: user-service
+  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  #     PORT: 8001
+      
+  #     DATABASE_URL: postgresql://user_svc:${USER_DB_PASS:-user_pass}@postgres:5432/users_db
+      
+  #     MINIO_ENDPOINT: http://minio:9000
+  #     MINIO_ACCESS_KEY: ${MINIO_USER}
+  #     MINIO_SECRET_KEY: ${MINIO_PASS}
+  #     MINIO_BUCKET: ${MINIO_USER_BUCKET:-user-avatars}
+
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      
+  #     # Keycloak
+  #     KEYCLOAK_URL: http://keycloak:8080
+  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
+  #     KEYCLOAK_CLIENT_ID: user-service
+  #     KEYCLOAK_CLIENT_SECRET: ${USER_SERVICE_CLIENT_SECRET}
+  #   ports:
+  #     - "8001:8001"
+  #   networks:
+  #     - backend
+  #     - database
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   logging: *default-logging
+
+  # catalog-service:
+  #   build:
+  #     context: ../services/catalog-service
+  #     dockerfile: Dockerfile
+  #   container_name: e-shop-catalog-service
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     SERVICE_NAME: catalog-service
+  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  #     PORT: 8002
+      
+  #     DATABASE_URL: postgresql://catalog_svc:${CATALOG_DB_PASS:-catalog_pass}@postgres:5432/catalog_db
+
+  #     MINIO_ENDPOINT: http://minio:9000
+  #     MINIO_ACCESS_KEY: ${MINIO_USER}
+  #     MINIO_SECRET_KEY: ${MINIO_PASS}
+  #     MINIO_BUCKET: ${MINIO_PRODUCT_BUCKET:-product-images}
+
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      
+  #   ports:
+  #     - "8002:8002"
+  #   networks:
+  #     - backend
+  #     - database
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   logging: *default-logging
+
+  # order-service:
+  #   build:
+  #     context: ../services/order-service
+  #     dockerfile: Dockerfile
+  #   container_name: e-shop-order-service
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     minio:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #     keycloak:
+  #       condition: service_started
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     SERVICE_NAME: order-service
+  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  #     PORT: 8003
+      
+  #     DATABASE_URL: postgresql://order_svc:${ORDER_DB_PASS:-order_pass}@postgres:5432/orders_db
+      
+  #     MINIO_ENDPOINT: http://minio:9000
+  #     MINIO_ACCESS_KEY: ${MINIO_USER}
+  #     MINIO_SECRET_KEY: ${MINIO_PASS}
+  #     MINIO_BUCKET: ${MINIO_ORDER_BUCKET:-order-invoices}
+
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      
+  #     # Keycloak
+  #     KEYCLOAK_URL: http://keycloak:8080
+  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
+  #   ports:
+  #     - "8003:8003"
+  #   networks:
+  #     - backend
+  #     - database
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   logging: *default-logging
+
+  # payment-service:
+  #   build:
+  #     context: ../services/payment-service
+  #     dockerfile: Dockerfile
+  #   container_name: e-shop-payment-service
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     SERVICE_NAME: payment-service
+  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  #     PORT: 8004
+      
+  #     DATABASE_URL: postgresql://payment_svc:${PAYMENT_DB_PASS:-payment_pass}@postgres:5432/payments_db
+
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      
+  #     KEYCLOAK_URL: http://keycloak:8080
+  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
+  #   ports:
+  #     - "8004:8004"
+  #   networks:
+  #     - backend
+  #     - database
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   logging: *default-logging
+
+  # notification-service:
+  #   build:
+  #     context: ../services/notification-service
+  #     dockerfile: Dockerfile
+  #   container_name: e-shop-notification-service
+  #   restart: unless-stopped
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     SERVICE_NAME: notification-service
+  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  #     PORT: 8005
+      
+  #     MONGO_URL: mongodb://notification_svc:${NOTIF_MONGO_PASS:-notif_pass}@mongo:27017/notifications_db?authSource=notifications_db
+      
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+  #     RABBITMQ_QUEUE: notifications
+  #   ports:
+  #     - "8005:8005"
+  #   networks:
+  #     - backend
+  #     - database
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   logging: *default-logging
+
+  # config-service:
+  #   build:
+  #     context: ../services/config-service
+  #     dockerfile: Dockerfile
+  #   container_name: e-shop-config-service
+  #   restart: unless-stopped
+  #   depends_on:
+  #     mongo:
+  #       condition: service_healthy
+  #     rabbitmq:
+  #       condition: service_healthy
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     SERVICE_NAME: config-service
+  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
+  #     PORT: 8006
+      
+  #     MONGO_URL: mongodb://config_svc:${CONFIG_MONGO_PASS:-config_pass}@mongo:27017/configs_db?authSource=configs_db
+      
+  #     RABBITMQ_HOST: rabbitmq
+  #     RABBITMQ_PORT: 5672
+  #     RABBITMQ_USER: ${RABBITMQ_USER}
+  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+  #     RABBITMQ_QUEUE: configs
+  #   ports:
+  #     - "8006:8006"
+  #   networks:
+  #     - backend
+  #     - database
+  #   healthcheck:
+  #     test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+  #     start_period: 30s
+  #   logging: *default-logging
