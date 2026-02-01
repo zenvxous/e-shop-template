@@ -4,11 +4,14 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 ENV PYTHONPATH=/src
 
-RUN apt-get update -y && apt-get install -y \
-    gcc \
-    python3-dev \
-    libc-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        gcc \
+        python3-dev \
+        libc-dev \
+        wget \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN pip install --upgrade pip && pip install uv
 
