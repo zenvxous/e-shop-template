@@ -1,0 +1,13 @@
+package routes
+
+import (
+	"payment/internal/handlers"
+
+	"github.com/gofiber/fiber/v2"
+)
+
+func SetupRoutes(app *fiber.App) {
+	api := app.Group("/payment/api")
+
+	api.Get("/health", handlers.Health)
+}
