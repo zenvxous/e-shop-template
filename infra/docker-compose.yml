@@ -355,43 +355,43 @@ services:
   #     start_period: 30s
   #   logging: *default-logging
 
-  # notification-service:
-  #   build:
-  #     context: ../services/notification-service
-  #     dockerfile: Dockerfile
-  #   container_name: e-shop-notification-service
-  #   restart: unless-stopped
-  #   depends_on:
-  #     mongo:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     SERVICE_NAME: notification-service
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     PORT: 8005
+  notification-service:
+    build:
+      context: ../services/notification
+      dockerfile: Dockerfile
+    container_name: e-shop-notification-service
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: notification-service
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8005
       
-  #     MONGO_URL: mongodb://notification_svc:${NOTIF_MONGO_PASS:-notif_pass}@mongo:27017/notifications_db?authSource=notifications_db
+      MONGO_URL: mongodb://notification_svc:${NOTIF_MONGO_PASS:-notif_pass}@mongo:27017/notifications_db?authSource=notifications_db
       
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USER: ${RABBITMQ_USER}
-  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
-  #     RABBITMQ_QUEUE: notifications
-  #   ports:
-  #     - "8005:8005"
-  #   networks:
-  #     - backend
-  #     - database
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8005/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   logging: *default-logging
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_QUEUE: notifications
+    ports:
+      - "8005:8005"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8005/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
 
   # config-service:
   #   build:
