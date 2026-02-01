@@ -12,5 +12,5 @@ func App() {
 
 	routes.SetupRoutes(app)
 
-	log.Fatal(app.Listen(":8003"))
+	log.Fatal(app.Listen("0.0.0.0:8003"))
 }

@@ -265,95 +265,95 @@ services:
   #     start_period: 30s
   #   logging: *default-logging
 
-  # order-service:
-  #   build:
-  #     context: ../services/order-service
-  #     dockerfile: Dockerfile
-  #   container_name: e-shop-order-service
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     keycloak:
-  #       condition: service_started
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     SERVICE_NAME: order-service
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     PORT: 8003
+  order-service:
+    build:
+      context: ../services/order
+      dockerfile: Dockerfile
+    container_name: e-shop-order-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: order-service
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8003
       
-  #     DATABASE_URL: postgresql://order_svc:${ORDER_DB_PASS:-order_pass}@postgres:5432/orders_db
+      DATABASE_URL: postgresql://order_svc:${ORDER_DB_PASS:-order_pass}@postgres:5432/orders_db
       
-  #     MINIO_ENDPOINT: http://minio:9000
-  #     MINIO_ACCESS_KEY: ${MINIO_USER}
-  #     MINIO_SECRET_KEY: ${MINIO_PASS}
-  #     MINIO_BUCKET: ${MINIO_ORDER_BUCKET:-order-invoices}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASS}
+      MINIO_BUCKET: ${MINIO_ORDER_BUCKET:-order-invoices}
 
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USER: ${RABBITMQ_USER}
-  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
       
-  #     # Keycloak
-  #     KEYCLOAK_URL: http://keycloak:8080
-  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
-  #   ports:
-  #     - "8003:8003"
-  #   networks:
-  #     - backend
-  #     - database
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8003/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   logging: *default-logging
+      # Keycloak
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
+    ports:
+      - "8003:8003"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8003/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
 
-  # payment-service:
-  #   build:
-  #     context: ../services/payment-service
-  #     dockerfile: Dockerfile
-  #   container_name: e-shop-payment-service
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     SERVICE_NAME: payment-service
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     PORT: 8004
+  payment-service:
+    build:
+      context: ../services/payment
+      dockerfile: Dockerfile
+    container_name: e-shop-payment-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: payment-service
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8004
       
-  #     DATABASE_URL: postgresql://payment_svc:${PAYMENT_DB_PASS:-payment_pass}@postgres:5432/payments_db
+      DATABASE_URL: postgresql://payment_svc:${PAYMENT_DB_PASS:-payment_pass}@postgres:5432/payments_db
 
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USER: ${RABBITMQ_USER}
-  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
       
-  #     KEYCLOAK_URL: http://keycloak:8080
-  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
-  #   ports:
-  #     - "8004:8004"
-  #   networks:
-  #     - backend
-  #     - database
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8004/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   logging: *default-logging
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
+    ports:
+      - "8004:8004"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8004/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
 
   notification-service:
     build:
