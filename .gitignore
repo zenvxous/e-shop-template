@@ -1,0 +1,137 @@
+# ════════════════════════════════════════════
+# Environment & Secrets
+# ════════════════════════════════════════════
+.env
+.env.local
+.env.*.local
+infra/.env
+services/*/.env
+*.pem
+*.key
+secrets/
+
+# ════════════════════════════════════════════
+# IDE & Editor
+# ════════════════════════════════════════════
+.vscode
+.idea
+*.swp
+*.swo
+*~
+.DS_Store
+.sublime-project
+.sublime-workspace
+*.iml
+
+# ════════════════════════════════════════════
+# Python
+# ════════════════════════════════════════════
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv
+venv
+ENV
+env
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+pip-log.txt
+pip-delete-this-directory.txt
+.tox/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ════════════════════════════════════════════
+# Node / Frontend
+# ════════════════════════════════════════════
+node_modules/
+npm-debug.log
+yarn-error.log
+.next
+dist
+build
+coverage
+
+# ════════════════════════════════════════════
+# Go
+# ════════════════════════════════════════════
+*.so
+*.dylib
+*.dll
+*.exe
+bin/
+dist/
+
+# ════════════════════════════════════════════
+# Docker & Container
+# ════════════════════════════════════════════
+.docker
+docker-compose.override.yml
+
+# ════════════════════════════════════════════
+# CI/CD
+# ════════════════════════════════════════════
+.github/workflows/
+.gitlab-ci.yml
+.circleci/
+.travis.yml
+Jenkinsfile
+
+# ════════════════════════════════════════════
+# Logs & Temporary
+# ════════════════════════════════════════════
+*.log
+logs/
+tmp/
+temp/
+*.tmp
+
+# ════════════════════════════════════════════
+# Databases (local dev volumes)
+# ════════════════════════════════════════════
+infra/postgres_data/
+infra/mongo_data/
+infra/minio_data/
+infra/rabbitmq_data/
+*.db
+*.sqlite
+
+# ════════════════════════════════════════════
+# OS
+# ════════════════════════════════════════════
+.DS_Store
+Thumbs.db
+.directory
+
+# ════════════════════════════════════════════
+# IDE generated files
+# ════════════════════════════════════════════
+.venv/
+venv/
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytest_cache/
+
+# ════════════════════════════════════════════
+# Local testing
+# ════════════════════════════════════════════
+.env.test
+*.test
+test-results/
