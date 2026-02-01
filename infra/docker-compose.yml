@@ -168,102 +168,102 @@ services:
       start_period: 60s
     logging: *default-logging
 
-  # user-service:
-  #   build:
-  #     context: ../services/user-service
-  #     dockerfile: Dockerfile
-  #   container_name: e-shop-user-service
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #     keycloak:
-  #       condition: service_started
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     SERVICE_NAME: user-service
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     PORT: 8001
+  user-service:
+    build:
+      context: ../services/user
+      dockerfile: Dockerfile
+    container_name: e-shop-user-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+      keycloak:
+        condition: service_started
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: user-service
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8001
       
-  #     DATABASE_URL: postgresql://user_svc:${USER_DB_PASS:-user_pass}@postgres:5432/users_db
+      DATABASE_URL: postgresql://user_svc:${USER_DB_PASS:-user_pass}@postgres:5432/users_db
       
-  #     MINIO_ENDPOINT: http://minio:9000
-  #     MINIO_ACCESS_KEY: ${MINIO_USER}
-  #     MINIO_SECRET_KEY: ${MINIO_PASS}
-  #     MINIO_BUCKET: ${MINIO_USER_BUCKET:-user-avatars}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASS}
+      MINIO_BUCKET: ${MINIO_USER_BUCKET:-user-avatars}
 
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USER: ${RABBITMQ_USER}
-  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
       
-  #     # Keycloak
-  #     KEYCLOAK_URL: http://keycloak:8080
-  #     KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
-  #     KEYCLOAK_CLIENT_ID: user-service
-  #     KEYCLOAK_CLIENT_SECRET: ${USER_SERVICE_CLIENT_SECRET}
-  #   ports:
-  #     - "8001:8001"
-  #   networks:
-  #     - backend
-  #     - database
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   logging: *default-logging
+      # Keycloak
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: ${KEYCLOAK_REALM:-ecommerce}
+      KEYCLOAK_CLIENT_ID: user-service
+      KEYCLOAK_CLIENT_SECRET: ${USER_SERVICE_CLIENT_SECRET}
+    ports:
+      - "8001:8001"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8001/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
 
-  # catalog-service:
-  #   build:
-  #     context: ../services/catalog-service
-  #     dockerfile: Dockerfile
-  #   container_name: e-shop-catalog-service
-  #   restart: unless-stopped
-  #   depends_on:
-  #     postgres:
-  #       condition: service_healthy
-  #     minio:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     SERVICE_NAME: catalog-service
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     PORT: 8002
+  catalog-service:
+    build:
+      context: ../services/catalog
+      dockerfile: Dockerfile
+    container_name: e-shop-catalog-service
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: catalog-service
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8002
       
-  #     DATABASE_URL: postgresql://catalog_svc:${CATALOG_DB_PASS:-catalog_pass}@postgres:5432/catalog_db
+      DATABASE_URL: postgresql://catalog_svc:${CATALOG_DB_PASS:-catalog_pass}@postgres:5432/catalog_db
 
-  #     MINIO_ENDPOINT: http://minio:9000
-  #     MINIO_ACCESS_KEY: ${MINIO_USER}
-  #     MINIO_SECRET_KEY: ${MINIO_PASS}
-  #     MINIO_BUCKET: ${MINIO_PRODUCT_BUCKET:-product-images}
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASS}
+      MINIO_BUCKET: ${MINIO_PRODUCT_BUCKET:-product-images}
 
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USER: ${RABBITMQ_USER}
-  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
       
-  #   ports:
-  #     - "8002:8002"
-  #   networks:
-  #     - backend
-  #     - database
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   logging: *default-logging
+    ports:
+      - "8002:8002"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8002/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
 
   order-service:
     build:
@@ -393,40 +393,40 @@ services:
       start_period: 30s
     logging: *default-logging
 
-  # config-service:
-  #   build:
-  #     context: ../services/config-service
-  #     dockerfile: Dockerfile
-  #   container_name: e-shop-config-service
-  #   restart: unless-stopped
-  #   depends_on:
-  #     mongo:
-  #       condition: service_healthy
-  #     rabbitmq:
-  #       condition: service_healthy
-  #   env_file:
-  #     - .env
-  #   environment:
-  #     SERVICE_NAME: config-service
-  #     LOG_LEVEL: ${LOG_LEVEL:-INFO}
-  #     PORT: 8006
+  config-service:
+    build:
+      context: ../services/config
+      dockerfile: Dockerfile
+    container_name: e-shop-config-service
+    restart: unless-stopped
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      SERVICE_NAME: config-service
+      LOG_LEVEL: ${LOG_LEVEL:-INFO}
+      PORT: 8006
       
-  #     MONGO_URL: mongodb://config_svc:${CONFIG_MONGO_PASS:-config_pass}@mongo:27017/configs_db?authSource=configs_db
+      MONGO_URL: mongodb://config_svc:${CONFIG_MONGO_PASS:-config_pass}@mongo:27017/configs_db?authSource=configs_db
       
-  #     RABBITMQ_HOST: rabbitmq
-  #     RABBITMQ_PORT: 5672
-  #     RABBITMQ_USER: ${RABBITMQ_USER}
-  #     RABBITMQ_PASS: ${RABBITMQ_PASS}
-  #     RABBITMQ_QUEUE: configs
-  #   ports:
-  #     - "8006:8006"
-  #   networks:
-  #     - backend
-  #     - database
-  #   healthcheck:
-  #     test: ["CMD", "curl", "-f", "http://localhost:8006/health"]
-  #     interval: 10s
-  #     timeout: 5s
-  #     retries: 5
-  #     start_period: 30s
-  #   logging: *default-logging
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_USER: ${RABBITMQ_USER}
+      RABBITMQ_PASS: ${RABBITMQ_PASS}
+      RABBITMQ_QUEUE: configs
+    ports:
+      - "8006:8006"
+    networks:
+      - backend
+      - database
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8006/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging: *default-logging
