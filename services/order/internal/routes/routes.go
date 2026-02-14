@@ -3,7 +3,7 @@ package routes
 import (
 	"order/internal/handlers"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 func SetupRoutes(app *fiber.App) {
