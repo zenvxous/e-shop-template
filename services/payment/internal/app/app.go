@@ -1,10 +1,10 @@
 package app
 
 import (
-	"log"
+	"log/slog"
 	"payment/internal/routes"
 
-	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v3"
 )
 
 func App() {
@@ -12,5 +12,5 @@ func App() {
 
 	routes.SetupRoutes(app)
 
-	log.Fatal(app.Listen("0.0.0.0:8004"))
+	slog.Error("Server stopped w an error", slog.Any("error", app.Listen(":8004")))
 }

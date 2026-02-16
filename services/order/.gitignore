@@ -17,3 +17,5 @@ coverage.*
 Thumbs.db
 *.log
 docker-compose.yaml
+mod/
+sumdb/
