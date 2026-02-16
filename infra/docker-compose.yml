@@ -28,7 +28,6 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASS}
-      POSTGRES_DB: ${POSTGRES_DB:-marketplace}
       KC_DB_PASS: ${KC_DB_PASS}
       USER_DB_PASS: ${USER_DB_PASS}
       CATALOG_DB_PASS: ${CATALOG_DB_PASS}

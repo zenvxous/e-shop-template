@@ -20,7 +20,7 @@ echo -n "Checking PostgreSQL connection... "
 if ! psql -U "$POSTGRES_USER" -c 'SELECT 1' >/dev/null 2>&1; then
 	echo "❌ FAILED"
 	echo "ERROR: Cannot connect to PostgreSQL"
-	exit 1
+	exit 122
 fi
 echo "✓"
 
