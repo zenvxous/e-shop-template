@@ -1,0 +1,6 @@
+pkg/mod
+pkg/sumdb
+.git
+.idea
+*.log
+Dockerfile
