@@ -15,6 +15,7 @@ import (
 	"payment/internal/routes"
 	"payment/internal/service"
 
+	"github.com/gofiber/contrib/v3/swaggerui"
 	"github.com/gofiber/fiber/v3"
 )
 
@@ -48,6 +49,13 @@ func New(cfg config.Config) (*App, error) {
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 	})
+
+	fiberApp.Use(swaggerui.New(swaggerui.Config{
+		BasePath: "/",
+		Path:     "swagger",
+		FilePath: "./docs/swagger.json",
+		Title:    "Payment Service API",
+	}))
 
 	routes.SetupRoutes(fiberApp, h)
 
