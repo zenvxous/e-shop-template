@@ -1,0 +1,252 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Order Service API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/health": {
+      "get": {
+        "tags": ["System"],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/HealthResponse"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts": {
+      "post": {
+        "tags": ["Carts"],
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Cart"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts/{cart_id}/items": {
+      "post": {
+        "tags": ["Carts"],
+        "parameters": [
+          {
+            "name": "cart_id",
+            "in": "path",
+            "required": true,
+            "schema": {"type": "string", "format": "uuid"}
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/AddCartItemRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Cart"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts/{cart_id}/items/{item_id}": {
+      "patch": {
+        "tags": ["Carts"],
+        "parameters": [
+          {"name": "cart_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "item_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/UpdateCartItemRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Cart"}
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": ["Carts"],
+        "parameters": [
+          {"name": "cart_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}},
+          {"name": "item_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "204": {"description": "No Content"}
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "tags": ["Orders"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/CreateOrderRequest"}
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Order"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}": {
+      "get": {
+        "tags": ["Orders"],
+        "parameters": [
+          {"name": "order_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Order"}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}/status": {
+      "patch": {
+        "tags": ["Orders"],
+        "parameters": [
+          {"name": "order_id", "in": "path", "required": true, "schema": {"type": "string", "format": "uuid"}}
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {"$ref": "#/components/schemas/UpdateOrderStatusRequest"}
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {"$ref": "#/components/schemas/Order"}
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"},
+          "service": {"type": "string"}
+        },
+        "required": ["status", "service"]
+      },
+      "Cart": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "user_id": {"type": "string", "format": "uuid"},
+          "status": {"type": "string"},
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/CartItem"}}
+        }
+      },
+      "CartItem": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "product_id": {"type": "string", "format": "uuid"},
+          "quantity": {"type": "integer"},
+          "unit_price": {"type": "string"}
+        }
+      },
+      "AddCartItemRequest": {
+        "type": "object",
+        "properties": {
+          "product_id": {"type": "string", "format": "uuid"},
+          "quantity": {"type": "integer"},
+          "unit_price": {"type": "string"}
+        },
+        "required": ["product_id", "quantity", "unit_price"]
+      },
+      "UpdateCartItemRequest": {
+        "type": "object",
+        "properties": {
+          "quantity": {"type": "integer"}
+        },
+        "required": ["quantity"]
+      },
+      "CreateOrderRequest": {
+        "type": "object",
+        "properties": {
+          "cart_id": {"type": "string", "format": "uuid"}
+        },
+        "required": ["cart_id"]
+      },
+      "UpdateOrderStatusRequest": {
+        "type": "object",
+        "properties": {
+          "status": {"type": "string"}
+        },
+        "required": ["status"]
+      },
+      "Order": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "status": {"type": "string"},
+          "total_amount": {"type": "string"},
+          "items": {"type": "array", "items": {"$ref": "#/components/schemas/OrderItem"}}
+        }
+      },
+      "OrderItem": {
+        "type": "object",
+        "properties": {
+          "id": {"type": "string", "format": "uuid"},
+          "product_id": {"type": "string", "format": "uuid"},
+          "quantity": {"type": "integer"},
+          "unit_price": {"type": "string"}
+        }
+      }
+    }
+  }
+}

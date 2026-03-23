@@ -412,6 +412,12 @@ services:
       
       MONGO_URL: mongodb://config_svc:${CONFIG_MONGO_PASS:-config_pass}@mongo:27017/configs_db?authSource=configs_db
       
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_USER}
+      MINIO_SECRET_KEY: ${MINIO_PASS}
+      MINIO_BUCKET: marketplace-assets
+      MINIO_EXTERNAL_URL: http://localhost:9000
+      
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_USER: ${RABBITMQ_USER}

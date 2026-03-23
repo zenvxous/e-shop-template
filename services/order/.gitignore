@@ -19,3 +19,7 @@ Thumbs.db
 docker-compose.yaml
 mod/
 sumdb/
+
+# Local Go module cache accidentally created under the repo
+pkg/mod/
+pkg/sumdb/
