@@ -41,5 +41,6 @@ app.include_router(address.router)
 
 
 @app.get("/health", tags=["System"])
+@app.head("/health", tags=["System"])
 async def health():
     return {"status": "healthy", "service": settings.service_name}
